@@ -24,3 +24,10 @@ class App:
 
         user_json = result.json()
         return TestUser.from_json(user_json)
+
+    @property
+    def test_users(self):
+        all_users_request = get(self._test_users_url('limit=%d' % self.MAX_TEST_USERS))
+        returned_json = all_users_request.json()
+        users_json = returned_json['data']
+        return [TestUser.from_json(user_json) for user_json in users_json]

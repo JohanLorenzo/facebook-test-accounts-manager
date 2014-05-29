@@ -11,6 +11,16 @@ def _print_counter_and_message(number, total, message):
     print formatted_string.format(number, total, message)
 
 
+def _find_main_user(user_id, users):
+    main_user = users[-1]   # The first user created is the last return by Graph API
+    if user_id is None:
+        for user in users:
+            if user.id == user_id:
+                main_user = user
+                break
+    return main_user
+
+
 def create_users(number_of_users):
     for i in range(1, number_of_users):
         try:
@@ -18,6 +28,22 @@ def create_users(number_of_users):
             _print_counter_and_message(i, number_of_users, 'User created with id: %s' % user.id)
         except UserCreationError, e:
             _print_counter_and_message(i, number_of_users, 'Error: Cannot create user. Reason: %s' % e)
+            break
+
+
+def make_friendships(start_from, user_id):
+    users = app.test_users
+    number_of_users = len(users)
+    main_user = _find_main_user(user_id, users)
+
+    i = start_from
+    for user in users[start_from:]:
+        i += 1
+        try:
+            user.make_friend(main_user)
+            _print_counter_and_message(i, number_of_users, 'Friendship made.')
+        except FriendshipError, e:
+            _print_counter_and_message(i, number_of_users, 'Error: Cannot make friendship. Reason: %s' % e)
             break
 
 
@@ -34,6 +60,13 @@ if __name__ == '__main__':
     create_users_parser.add_argument('--app-token', required=True, type=str, help='your Facebook app token')
     create_users_parser.add_argument('--number-of-users', type=int, help='number of users to create (default: %(default)s)',
                                      default=App.MAX_TEST_USERS)
+
+    make_friendships_parser = subparsers.add_parser('make-friendships', help='Make a user friend to all others')
+    make_friendships_parser.add_argument('--user-id', type=int, help='user that will be friend with all others '
+                                                                '(default: the first created user)', default=None)
+    make_friendships_parser.add_argument('--app-id', required=True, type=int, help='your Facebook app id')
+    make_friendships_parser.add_argument('--app-token', required=True, type=str, help='your Facebook app token')
+    make_friendships_parser.add_argument('--start-from', type=int, help='Start from the nth user in the list (default: %(default)s)', default=0)
 
     args = command_parser.parse_args()
 
